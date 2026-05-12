@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="portfolio-title" content="Cryptix">
+    <meta name="portfolio-category" content="Tech">
+    <meta name="portfolio-description" content="Password Manager and Generator - Fully encrypted!">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptix | Secure Password Suite</title>
+    <link rel="stylesheet" href="styles.css">
+ <link rel="stylesheet" href="/scripts/main.css">
+</head>
+<body>
+
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+    
+    <aside id="sidebar" class="collapsed">
+
+        <div class="sidebar-header">
+            <div class="brand-wrapper">
+                <img class="logo-img" src="logo.png"/>
+                <div class="logo-text-wrapper">
+                    <div class="logo">Cryptix</div>
+                    <label class="versionLabel">V <span id="versionNumber">1.0.0.15</span></label>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-tutorial" onclick="startTutorial()">Tutorial</button> 
+                <button id="vaultCloseButton" class="btn-close-vault" onclick="toggleSidebar()">X</button>
+            </div>
+        </div>
+        
+        <div class="search-container" style="padding: 0 1rem 1rem 1rem;">
+            <div style="position: relative;">
+                <input type="text" id="vaultSearch" placeholder="Search..." 
+                       oninput="filterVault()" 
+                       style="width: 100%; padding-right: 35px;">
+                <button id="clearSearch" onclick="clearSearch()" 
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                               background: none; border: none; color: var(--text-muted); 
+                               cursor: pointer; display: none; font-size: 1.2rem;">&times;</button>
+            </div>
+        </div>
+        
+        <div class="vault-list" id="vaultList">
+            <div style="text-align: center; color: var(--text-muted); margin-top: 2rem;">Vault is empty.<br>Save a Credential</div>
+        </div>
+        
+        <div id="batchActions" class="vault-actions" style="display: none;">
+            <button class="btn-danger" style="width:100%" onclick="deleteSelected()">Delete Selected (<span id="selectedCount">0</span>)</button>
+        </div>
+
+        <div style="padding: 1rem; border-top: 1px solid var(--border);">
+
+            <!-- will implement at a later stage
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+                <label class="switch">
+                    <input type="checkbox" id="exportPlainTextToggle">
+                    <span class="slider"></span>
+                </label>
+                <label for="exportPlainTextToggle" class="switch-label" style="cursor: pointer; margin: 0;">Export in Plain-Text</label>
+            </div>
+            -->
+            
+            <button class="btn-outline" style="width: 100%;" onclick="exportVault()">Export JSON</button>
+            <input type="file" id="importFile" hidden onchange="handleImport(this)">
+            <button class="btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <button class="btn-danger" style="width: 100%; margin-top: 0.5rem;" onclick="showResetModal()">Reset Everything</button>
+        </div>
+    </aside>
+
+    <main>
+
+        <div class="title-brand-wrapper">
+            <div class="logo">Cryptix</div>
+            <label class="title-brand-wrapper-version">V <span id="versionNumber">1.0.0.15 - Password Manager and Generator</span></label>
+        </div>
+        
+        <div class="view-container">
+            
+            <!-- Left Side: Generator -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Generate</h2>
+                    <button class="btn-helpandguide" style="width: 100%; margin-top: 0.5rem;" onclick="showHelp('general')">Help & Guide</button>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" id="tabPass" onclick="setMode('pass')">Password</div>
+                    <div class="tab" id="tabPin" onclick="setMode('pin')">PIN</div>
+                    <button class="btn-help-pinandpassword" onclick="showHelp('generate')">?</button>
+                </div>
+
+                <details id="configPinAndPassword" style="margin-bottom: 1.5rem; cursor: pointer;">
+                    <summary style="font-size: 0.85rem; color: var(--primary); font-weight: 600; padding: 0.5rem 0; outline: none;">
+                        Configure
+                    </summary>
+
+                    <div style="padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 0.5rem;">
+                        <div class="form-group">
+                            <label>Length: <span id="lenVal">16</span></label>
+                            <input type="range" id="genLength" min="4" max="64" value="16" oninput="document.getElementById('lenVal').innerText = this.value">
+                        </div>
+
+                        <div id="passwordOptions">
+                            <div class="form-group">
+                                <label>Character Set</label>
+                                <select id="charPreset" onchange="applyPreset(this.value)">
+                                    <option value="strong" selected>Strong (Alphanumeric + Symbols)</option>
+                                    <option value="alphanumeric">Alphanumeric (Letters & Numbers)</option>
+                                    <option value="all">Everything (Full ASCII)</option>
+                                    <option value="custom">Custom Character List</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customCharGroup" style="display: none;">
+                                <label>Custom Characters</label>
+                                <input type="text" id="customChars" value="abcdefghijklmnopqrstuvwxyz0123456789">
+                            </div>
+
+                            <div class="checkbox-grid">
+                                <div class="checkbox-item">
+                                    <label class="switch">
+                                        <input type="checkbox" id="forceUpper" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <label for="forceUpper" class="switch-label" style="cursor: pointer;">Lower & Upper</label>
+                                </div>
+
+                                <div class="checkbox-item">
+                                    <label class="switch">
+                                        <input type="checkbox" id="forceNumber" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <label for="forceNumber" class="switch-label" style="cursor: pointer;">Numbers</label>
+                                </div>
+
+                                <div class="checkbox-item">
+                                    <label class="switch">
+                                        <input type="checkbox" id="forceSymbol" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <label for="forceSymbol" class="switch-label" style="cursor: pointer;">Symbols</label>
+                                </div>
+                            </div>
+                            
+                        </div>
+
+                        <div id="pinOptions" style="display: none;">
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">PIN generation limited to numbers (0-9).</p>
+                        </div>
+                    </div>
+                </details>
+
+                <button class="btn-generate" onclick="handleGenerateOnly()">Generate</button>
+
+                <div class="result-area" onclick="copyResult()">
+                    <div class="generated-password" id="output">-</div>
+                    <div class="copy-hint">Click to copy</div>
+                </div>
+            </section>
+        
+            
+            
+            <!-- Right Side: Credential -->
+            <section class="card">
+
+                <div class="card-header">
+                    <h2>Credential</h2>
+                    <div class="header-actions">
+                        <button id="btn-hide-show-vault" class="btn-outline" onclick="toggleSidebar()">Show Vault</button>
+                        <button class="help-btn" onclick="showHelp('vault')">?</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Group - select one or type a custom name</label>
+                    <div class="input-with-action" style="position: relative;">
+                        <input type="text" id="vaultGroup" placeholder="Click to see Choices" value="General" autocomplete="off">
+
+                        <div id="groupSuggestions" class="suggestions">
+                            <div class="suggestion-item">Cloud</div>
+                            <div class="suggestion-item">Email</div>
+                            <div class="suggestion-item">Finance</div>
+                            <div class="suggestion-item">General</div>
+                            <div class="suggestion-item">Personal</div>
+                            <div class="suggestion-item">Social Media</div>
+                            <div class="suggestion-item">Travel</div>
+                            <div class="suggestion-item">Work</div>
+                        </div>
+                        <!-- <button class="btn-danger" onclick="clearGroup()">C</button> -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Title / Purpose / Intent (optional)</label>
+                    <input type="text" id="vaultNote" placeholder="label / description">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="vaultUser" placeholder="e.g. john_doe" autocomplete="new-password" oninput="handleUserSuggest(this.value)">
+                    <div id="userSuggestions" class="suggestions"></div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-with-action">
+                        <input type="password" id="vaultPass" placeholder="Generate or type manually">
+                        <button class="btn-generate-small" onclick="handleGenerate()">Gen</button>
+                        <button class="btn-outline" onclick="togglePassVisibility('vaultPass', this)">👁️</button>
+                    </div>
+                </div>
+
+                <div class="quick-add-container">
+                    <label class="switch">
+                        <input type="checkbox" id="quickAddToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <label for="quickAddToggle" class="switch-label" style="cursor: pointer;">Quick Mode</label>
+                    
+                    <label class="switch" >
+                        <input type="checkbox" id="autGenToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <label for="autGenToggle" class="switch-label" style="cursor: pointer;">Auto-Gen</label>
+                    
+                    <button class="btn-help-quickadd" onclick="showHelp('quickAdd')">?</button>
+                </div>
+                            
+                <div class="button-container">
+                    <button class="btn-save" onclick="addToVault()">Save</button>
+                    <button class="btn-update" onclick="updateExistingMemory()">Update</button>
+                    <button class="btn-clear-form" onclick="clearFormAndSelectedCred()">Clear</button>
+                </div>
+            </section>
+            
+            
+        </div>
+        
+        <!-- Bottom : Key Generation --> 
+        <div class="toolbar" id="masterKeyContainer">
+            <div class="toolbar-inner">
+                <div class="form-group" style="margin:0; flex:1">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <h2>Encryption Key</h2>
+                        <button class="help-aes-key" style=""  onclick="showHelp('master')">?</button>
+                    </div>
+                    <label style="margin:0; margin-bottom:10px; font-weight:400;">256 bit AES key - click 'New' to generate - or paste your own</label>
+
+                    <div class="input-with-action" style="position: relative;">
+                        <input type="text" id="masterKey" placeholder="Enter or generate key..." onfocus="clearKeyError()" style="padding-right: 40px;">
+                        <button onclick="clearMasterKey()" class="clear-input-btn" id="clearKeyBtn" title="Clear Key">
+                            &times;
+                        </button>
+                    </div>
+                    
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+                    <button class="new-key-btn" onclick="generateMasterKey()">New</button>
+                    <button class="btn-outline" onclick="copyToClipboard(document.getElementById('masterKey').value, 'Key copied!')" title="Copy Key">Copy</button>
+                    <input type="file" id="importKeyFile" hidden onchange="handleKeyImport(this)">
+                    <button class="btn-outline" onclick="document.getElementById('importKeyFile').click()" title="Import Encryption Key">Import</button>
+                    <button class="btn-outline" onclick="exportAESKey()" title="Export Encryption Key">Export</button>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <div id="helpModal" class="modal-overlay" onclick="closeHelp()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="helpTitle">Help Guide</h3>
+            <div id="helpContent"></div>
+            <button class="btn-primary" style="margin-top: 1rem;" onclick="closeHelp()">Close</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Warning: Overwriting Vault</h3>
+            <p>You have existing credentials in your current vault. Importing a new file will overwrite them.</p>
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="proceedImport()">Just Import</button>
+                <button class="btn-primary" onclick="exportThenImport()">Export then Import</button>
+                <button class="btn-outline" onclick="cancelImport()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="resetModal" class="modal-overlay">
+        <div class="modal">
+            <h3 style="color: var(--danger);">Factory Reset</h3>
+            <p>This will permanently wipe your current vault and clear all fields.</p>
+
+            <div id="resetExportPrompt" style="display:none; margin: 1rem 0; padding: 1rem; background: var(--danger); border-radius: 8px; border-left: 4px solid var(--danger);">
+                <p style="margin:0; font-size: 0.9rem;"><strong>Warning:</strong> You have stored credentials. Would you like to export a backup before wiping?</p>
+                <button class="btn-save" style="width:100%; margin-top:0.5rem; font-size: 0.8rem;" onclick="exportAndReset()">Export & Wipe</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="closeResetModal()">Cancel</button>
+                <button class="btn-danger" onclick="confirmReset()">Wipe Everything</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal">
+            <h3 style="color: var(--danger);">Confirm Deletion</h3>
+            <p>Are you sure you want to remove this credential? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="keyPromptModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h3>Vault Imported!</h3>
+            <p>Would you like to import the corresponding <strong>Encryption Key</strong> JSON file now?</p>
+            <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn-primary" style="flex: 1;" onclick="triggerKeyImportFlow()">Yes, Import Key</button>
+                <button class="btn-outline" style="flex: 1;" onclick="closeKeyPrompt()">No, I'll paste it</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Action completed!</div>
+
+    <script src="script.js"></script>
+<script src="/scripts/analytics.js"></script>
+</body>
+</html>
